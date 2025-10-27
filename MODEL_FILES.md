@@ -46,10 +46,16 @@ https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOpQrStUvWxYz123456
 
 En Render Dashboard → Tu servicio → Settings → Environment:
 
+**IMPORTANTE**: Usa las URLs completas que Google Drive te dio, NO las conviertas. El código ahora detecta automáticamente si es de Google Drive y extrae el ID.
+
 ```bash
-# Google Drive URLs
-MODEL_URL=https://drive.google.com/uc?export=download&id=TU_ID_DEL_MODELO
-FEATURES_URL=https://drive.google.com/uc?export=download&id=TU_ID_DE_FEATURES
+# Google Drive URLs (usar las URLs originales de compartir)
+MODEL_URL=https://drive.google.com/file/d/1CL1e6M_CcHBxtNZZeQppGM3oO5seQmCZ/view?usp=sharing
+FEATURES_URL=https://drive.google.com/file/d/1jCvo9eddDg1s81FEdbJAo8CSCSSoBT0V/view?usp=sharing
+
+# O puedes usar el formato corto con solo el ID
+# MODEL_URL=https://drive.google.com/uc?id=1CL1e6M_CcHBxtNZZeQppGM3oO5seQmCZ
+# FEATURES_URL=https://drive.google.com/uc?id=1jCvo9eddDg1s81FEdbJAo8CSCSSoBT0V
 
 # Django Settings
 PYTHON_VERSION=3.12.3
