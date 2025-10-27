@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malware Detection API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+
+        .endpoint h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .endpoint code {
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        .endpoint p {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method-get {
+            background: #28a745;
+            color: white;
+        }
+
+        .method-post {
+            background: #007bff;
+            color: white;
+        }
+
+        .example-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .example-box pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #764ba2;
+        }
+
+        .test-section {
+            margin-top: 20px;
+        }
+
+        #testResult {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Malware Detection API</h1>
+            <p>API REST para detección de malware en Android mediante análisis de tráfico de red</p>
+        </div>
+
+        <!-- Información General -->
+        <div class="card">
+            <h2>📋 Información General</h2>
+            <p>Esta API utiliza un modelo de Random Forest entrenado con el dataset CICAAGM para detectar malware en aplicaciones Android mediante el análisis de características de tráfico de red.</p>
+            <p style="margin-top: 10px;"><strong>Modelo:</strong> Random Forest Classifier | <strong>Features:</strong> 79 | <strong>Clases:</strong> Benign / Malware</p>
+        </div>
+
+        <!-- Endpoints Disponibles -->
+        <div class="card">
+            <h2>🔌 Endpoints Disponibles</h2>
+            
+            <div class="endpoint">
+                <h3>
+                    <span class="method-badge method-get">GET</span>
+                    <code>/api/health/</code>
+                </h3>
+                <p>Verifica el estado de salud de la API y si el modelo está cargado correctamente.</p>
+                <div class="example-box">
+                    <pre>{
+  "status": "healthy",
+  "model_loaded": true,
+  "timestamp": "2025-10-26T12:00:00Z",
+  "version": "1.0.0"
+}</pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>
+                    <span class="method-badge method-get">GET</span>
+                    <code>/api/model-info/</code>
+                </h3>
+                <p>Obtiene información detallada sobre el modelo de ML cargado.</p>
+                <div class="example-box">
+                    <pre>{
+  "status": "loaded",
+  "model_type": "RandomForestClassifier",
+  "n_features": 79,
+  "n_estimators": 100
+}</pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>
+                    <span class="method-badge method-get">GET</span>
+                    <code>/api/features/</code>
+                </h3>
+                <p>Retorna la lista completa de features requeridas para hacer una predicción.</p>
+            </div>
+
+            <div class="endpoint">
+                <h3>
+                    <span class="method-badge method-post">POST</span>
+                    <code>/api/predict/</code>
+                </h3>
+                <p>Realiza una predicción de malware basada en las características del tráfico de red.</p>
+                <div class="example-box">
+                    <pre>// Request
+{
+  "features": {
+    "flow_duration": 1234567,
+    "Header_Length": 20,
+    "Protocol Type": 6,
+    ...
+  }
+}
+
+// Response
+{
+  "prediction": 1,
+  "label": "malware",
+  "confidence": [0.15, 0.85],
+  "confidence_percentage": 85.0
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Pruebas -->
+        <div class="card">
+            <h2>🧪 Probar la API</h2>
+            <div class="test-section">
+                <button class="button" onclick="testHealth()">🏥 Verificar Health</button>
+                <button class="button" onclick="testModelInfo()">ℹ️ Info del Modelo</button>
+                <button class="button" onclick="testFeatures()">📝 Obtener Features</button>
+            </div>
+            <div id="testResult"></div>
+        </div>
+
+        <!-- Documentación de Uso -->
+        <div class="card">
+            <h2>📖 Cómo Usar la API</h2>
+            <h3 style="margin-bottom: 10px;">Con cURL:</h3>
+            <div class="example-box">
+                <pre># Health Check
+curl http://localhost:8000/api/health/
+
+# Hacer una predicción
+curl -X POST http://localhost:8000/api/predict/ \
+  -H "Content-Type: application/json" \
+  -d '{"features": {"flow_duration": 1234, "Header_Length": 20, ...}}'</pre>
+            </div>
+
+            <h3 style="margin: 20px 0 10px 0;">Con Python:</h3>
+            <div class="example-box">
+                <pre>import requests
+
+# Health check
+response = requests.get('http://localhost:8000/api/health/')
+print(response.json())
+
+# Predicción
+features = {
+    "flow_duration": 1234567,
+    "Header_Length": 20,
+    # ... todas las features
+}
+response = requests.post(
+    'http://localhost:8000/api/predict/',
+    json={'features': features}
+)
+print(response.json())</pre>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Desarrollado con Django REST Framework | Random Forest ML Model</p>
+            <p>© 2025 Malware Detection API</p>
+        </div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>⏳ Verificando...</p>';
+            
+            try {
+                const response = await fetch('/api/health/');
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'success' : 'error';
+                resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '<p>❌ Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function testModelInfo() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>⏳ Obteniendo información...</p>';
+            
+            try {
+                const response = await fetch('/api/model-info/');
+                const data = await response.json();
+                resultDiv.className = response.ok ? 'success' : 'error';
+                resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '<p>❌ Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function testFeatures() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>⏳ Cargando features...</p>';
+            
+            try {
+                const response = await fetch('/api/features/');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    let html = '<h3>Features Requeridas (' + data.total + ')</h3>';
+                    html += '<div class="features-grid">';
+                    data.features.forEach(feature => {
+                        html += '<div class="feature-item">' + feature + '</div>';
+                    });
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '<p>❌ Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
