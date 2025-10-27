@@ -4,11 +4,13 @@ Implementa el patrón Singleton para cargar el modelo una sola vez.
 Principios SOLID aplicados: Single Responsibility Principle.
 """
 import logging
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
 import joblib
 import numpy as np
 import pandas as pd
+import requests
 from django.conf import settings
 
 
@@ -23,6 +25,33 @@ class ModelLoadError(Exception):
 class PredictionError(Exception):
     """Excepción personalizada para errores en la predicción."""
     pass
+
+
+def download_file_from_url(url: str, destination: Path) -> bool:
+    """
+    Descarga un archivo desde una URL.
+    
+    Args:
+        url: URL del archivo a descargar
+        destination: Ruta donde guardar el archivo
+        
+    Returns:
+        True si se descargó exitosamente, False en caso contrario
+    """
+    try:
+        logger.info(f"Descargando archivo desde: {url}")
+        response = requests.get(url, stream=True, timeout=300)
+        response.raise_for_status()
+        
+        with open(destination, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        logger.info(f"Archivo descargado exitosamente en: {destination}")
+        return True
+    except Exception as e:
+        logger.error(f"Error al descargar archivo: {str(e)}")
+        return False
 
 
 class MalwareDetectorService:
@@ -56,6 +85,7 @@ class MalwareDetectorService:
                    features_path: Optional[Path] = None) -> None:
         """
         Carga el modelo y las características desde disco.
+        Si los archivos no existen y hay URLs en variables de entorno, los descarga.
         
         Args:
             model_path: Ruta al archivo del modelo
@@ -72,11 +102,30 @@ class MalwareDetectorService:
             model_path = model_path or settings.MODEL_PATH
             features_path = features_path or settings.FEATURES_PATH
             
+            # Intentar descargar desde URLs si los archivos no existen
             if not model_path.exists():
-                raise ModelLoadError(f"Modelo no encontrado en: {model_path}")
+                model_url = os.environ.get('MODEL_URL')
+                if model_url:
+                    logger.info("Modelo no encontrado localmente, descargando desde URL...")
+                    if not download_file_from_url(model_url, model_path):
+                        raise ModelLoadError(f"No se pudo descargar el modelo desde: {model_url}")
+                else:
+                    raise ModelLoadError(
+                        f"Modelo no encontrado en: {model_path}. "
+                        "Configura la variable de entorno MODEL_URL para descargarlo automáticamente."
+                    )
             
             if not features_path.exists():
-                raise ModelLoadError(f"Features no encontradas en: {features_path}")
+                features_url = os.environ.get('FEATURES_URL')
+                if features_url:
+                    logger.info("Features no encontradas localmente, descargando desde URL...")
+                    if not download_file_from_url(features_url, features_path):
+                        raise ModelLoadError(f"No se pudo descargar las features desde: {features_url}")
+                else:
+                    raise ModelLoadError(
+                        f"Features no encontradas en: {features_path}. "
+                        "Configura la variable de entorno FEATURES_URL para descargarlas automáticamente."
+                    )
             
             logger.info(f"Cargando modelo desde: {model_path}")
             self._model = joblib.load(model_path)

@@ -9,109 +9,121 @@ Los siguientes archivos NO están incluidos en el repositorio debido a su tamañ
 - `TotalFeatures-ISCXFlowMeter.csv` (~150MB)
 - `Random_Forest.ipynb` (notebook original)
 
-## 📥 Cómo obtener los archivos del modelo
+## 📥 GUÍA PASO A PASO: Google Drive + Render
 
-### Opción 1: Google Drive / Dropbox (Recomendado para Render)
+### **Paso 1: Subir archivos a Google Drive**
 
-1. Sube los archivos `.pkl` a Google Drive o Dropbox
-2. Obtén un enlace de descarga directo
-3. Configura las variables de entorno en Render:
-   ```
-   MODEL_URL=https://drive.google.com/uc?export=download&id=TU_FILE_ID
-   FEATURES_URL=https://drive.google.com/uc?export=download&id=TU_FILE_ID
-   ```
+1. Ve a https://drive.google.com/
+2. Sube estos 2 archivos:
+   - `malware_detector_rf.pkl`
+   - `feature_columns.pkl`
 
-### Opción 2: Subir manualmente a Render
+### **Paso 2: Obtener enlaces de descarga directa**
 
-1. Después del deploy, usa Render Shell
-2. Sube los archivos directamente al servidor
+Para **CADA archivo**:
 
-### Opción 3: Entrenar el modelo nuevamente
+1. **Click derecho** en el archivo → **"Compartir"**
+2. Click en **"Cambiar a cualquier persona con el enlace"**
+3. Asegúrate que diga: **"Cualquier persona con el enlace puede ver"**
+4. Click en **"Copiar enlace"**
 
-Si tienes el dataset `TotalFeatures-ISCXFlowMeter.csv`:
+Tendrás algo como:
+```
+https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz123456/view?usp=sharing
+```
+
+5. **Extrae el ID** (la parte entre `/d/` y `/view`):
+```
+1AbCdEfGhIjKlMnOpQrStUvWxYz123456
+```
+
+6. **Crea la URL de descarga directa**:
+```
+https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOpQrStUvWxYz123456
+```
+
+### **Paso 3: Configurar Variables de Entorno en Render**
+
+En Render Dashboard → Tu servicio → Settings → Environment:
 
 ```bash
-# En tu entorno local
-python manage.py shell
+# Google Drive URLs
+MODEL_URL=https://drive.google.com/uc?export=download&id=TU_ID_DEL_MODELO
+FEATURES_URL=https://drive.google.com/uc?export=download&id=TU_ID_DE_FEATURES
+
+# Django Settings
+PYTHON_VERSION=3.12.3
+SECRET_KEY=tu-clave-secreta-super-segura-12345
+DEBUG=False
+ALLOWED_HOSTS=.onrender.com
 ```
 
-```python
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-import pickle
+### **Paso 4: Deploy**
 
-# Cargar dataset
-df = pd.read_csv('TotalFeatures-ISCXFlowMeter.csv')
+El código ya está configurado para:
+1. ✅ Detectar si los archivos `.pkl` existen localmente
+2. ✅ Si NO existen, descargarlos automáticamente desde las URLs
+3. ✅ Cargar el modelo y empezar a funcionar
 
-# Preparar datos
-X = df.drop('Label', axis=1)
-y = df['Label']
+**¡No necesitas hacer nada más!** El deploy automáticamente:
+- Descargará los archivos desde Google Drive
+- Cargará el modelo
+- Estará listo para hacer predicciones
 
-# Entrenar modelo
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X, y)
+## 🔍 **Ejemplo Completo**
 
-# Guardar modelo
-with open('malware_detector_rf.pkl', 'wb') as f:
-    pickle.dump(model, f)
+### Archivo: `malware_detector_rf.pkl`
 
-# Guardar columnas
-with open('feature_columns.pkl', 'wb') as f:
-    pickle.dump(list(X.columns), f)
-```
+1. **Enlace de Google Drive**:
+   ```
+   https://drive.google.com/file/d/1a2b3c4d5e6f7g8h9i0/view?usp=sharing
+   ```
 
-## 🚀 Para Deploy en Render
+2. **ID extraído**:
+   ```
+   1a2b3c4d5e6f7g8h9i0
+   ```
 
-### Método Recomendado: Variables de Entorno
+3. **URL de descarga directa** (para variable `MODEL_URL`):
+   ```
+   https://drive.google.com/uc?export=download&id=1a2b3c4d5e6f7g8h9i0
+   ```
 
-Agrega estas variables en Render:
+### Archivo: `feature_columns.pkl`
 
-```
-MODEL_URL=<url_de_descarga_directa_del_modelo>
-FEATURES_URL=<url_de_descarga_directa_de_features>
-```
+1. **Enlace de Google Drive**:
+   ```
+   https://drive.google.com/file/d/9i8h7g6f5e4d3c2b1a0/view?usp=sharing
+   ```
 
-Luego, modifica `services.py` para descargar los archivos automáticamente:
+2. **ID extraído**:
+   ```
+   9i8h7g6f5e4d3c2b1a0
+   ```
 
-```python
-import os
-import requests
-
-def download_model_files():
-    model_url = os.environ.get('MODEL_URL')
-    features_url = os.environ.get('FEATURES_URL')
-    
-    if model_url:
-        response = requests.get(model_url)
-        with open('malware_detector_rf.pkl', 'wb') as f:
-            f.write(response.content)
-    
-    if features_url:
-        response = requests.get(features_url)
-        with open('feature_columns.pkl', 'wb') as f:
-            f.write(response.content)
-```
-
-## 📂 Ubicación de los archivos
-
-Los archivos `.pkl` deben estar en el directorio raíz del proyecto:
-
-```
-ApiRandomForest/
-├── malware_detector_rf.pkl    ← Aquí
-├── feature_columns.pkl         ← Aquí
-├── manage.py
-├── predictor/
-└── ...
-```
+3. **URL de descarga directa** (para variable `FEATURES_URL`):
+   ```
+   https://drive.google.com/uc?export=download&id=9i8h7g6f5e4d3c2b1a0
+   ```
 
 ## ✅ Verificación
 
-Para verificar que los archivos están correctamente cargados:
+Después del deploy en Render, visita:
+```
+https://tu-app.onrender.com/api/health/
+```
 
-```bash
-curl http://localhost:8000/api/model-info/
+Deberías ver:
+```json
+{
+  "status": "healthy",
+  "model_loaded": true
+}
+```
+
+Y en:
+```
+https://tu-app.onrender.com/api/model-info/
 ```
 
 Deberías ver:
@@ -123,3 +135,13 @@ Deberías ver:
   ...
 }
 ```
+
+## 🚨 Troubleshooting
+
+Si el modelo no carga:
+
+1. **Revisa los logs en Render** → Tu servicio → Logs
+2. Busca mensajes como: "Descargando archivo desde: ..."
+3. Verifica que las URLs sean de **descarga directa** (con `uc?export=download`)
+4. Asegúrate que los archivos en Drive sean **públicos** (cualquiera con el enlace puede ver)
+
