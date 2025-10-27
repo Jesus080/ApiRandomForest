@@ -13,6 +13,13 @@ import pandas as pd
 import requests
 from django.conf import settings
 
+try:
+    import gdown
+    GDOWN_AVAILABLE = True
+except ImportError:
+    GDOWN_AVAILABLE = False
+    logging.warning("gdown no está disponible, las descargas de Google Drive pueden fallar")
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +34,43 @@ class PredictionError(Exception):
     pass
 
 
+def download_file_from_google_drive(file_id: str, destination: Path) -> bool:
+    """
+    Descarga un archivo desde Google Drive usando gdown.
+    
+    Args:
+        file_id: ID del archivo en Google Drive
+        destination: Ruta donde guardar el archivo
+        
+    Returns:
+        True si se descargó exitosamente, False en caso contrario
+    """
+    try:
+        if not GDOWN_AVAILABLE:
+            logger.warning("gdown no disponible, usando método alternativo")
+            return False
+        
+        logger.info(f"Descargando desde Google Drive (ID: {file_id})...")
+        url = f"https://drive.google.com/uc?id={file_id}"
+        
+        gdown.download(url, str(destination), quiet=False)
+        
+        if destination.exists() and destination.stat().st_size > 0:
+            logger.info(f"Archivo descargado exitosamente: {destination}")
+            return True
+        else:
+            logger.error("El archivo descargado está vacío o no existe")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error al descargar desde Google Drive: {str(e)}")
+        return False
+
+
 def download_file_from_url(url: str, destination: Path) -> bool:
     """
     Descarga un archivo desde una URL.
+    Detecta automáticamente si es de Google Drive y usa el método apropiado.
     
     Args:
         url: URL del archivo a descargar
@@ -39,18 +80,59 @@ def download_file_from_url(url: str, destination: Path) -> bool:
         True si se descargó exitosamente, False en caso contrario
     """
     try:
+        # Detectar si es un enlace de Google Drive
+        if 'drive.google.com' in url:
+            # Extraer el ID del archivo
+            if '/file/d/' in url:
+                file_id = url.split('/file/d/')[1].split('/')[0]
+                logger.info(f"Detectado enlace de Google Drive, ID: {file_id}")
+                if download_file_from_google_drive(file_id, destination):
+                    return True
+            elif 'id=' in url:
+                file_id = url.split('id=')[1].split('&')[0]
+                logger.info(f"Detectado enlace de Google Drive, ID: {file_id}")
+                if download_file_from_google_drive(file_id, destination):
+                    return True
+        
+        # Método estándar para otras URLs
         logger.info(f"Descargando archivo desde: {url}")
-        response = requests.get(url, stream=True, timeout=300)
+        
+        # Crear sesión para manejar cookies y redirecciones
+        session = requests.Session()
+        
+        # Primera petición
+        response = session.get(url, stream=True, timeout=300)
+        
+        # Google Drive puede devolver una página de advertencia para archivos grandes
+        # Necesitamos extraer el token de confirmación
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                # Hay un token de confirmación, hacer segunda petición
+                params = {'confirm': value}
+                response = session.get(url, params=params, stream=True, timeout=300)
+                break
+        
         response.raise_for_status()
         
+        # Guardar el archivo
+        total_size = 0
         with open(destination, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+                if chunk:
+                    f.write(chunk)
+                    total_size += len(chunk)
         
-        logger.info(f"Archivo descargado exitosamente en: {destination}")
+        logger.info(f"Archivo descargado exitosamente ({total_size} bytes) en: {destination}")
         return True
+        
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout al descargar archivo desde: {url}")
+        return False
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error de red al descargar archivo: {str(e)}")
+        return False
     except Exception as e:
-        logger.error(f"Error al descargar archivo: {str(e)}")
+        logger.error(f"Error inesperado al descargar archivo: {str(e)}")
         return False
 
 
